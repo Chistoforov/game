@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Patient Journey Simulator — Health Samurai</title>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/animations.css">
@@ -24,27 +25,39 @@
   <!-- Game Screen -->
   <section id="game-screen" class="screen">
     <header class="game-header">
-      <div class="metrics-row">
-        <div class="metric" data-metric="patientComfort">
-          <span class="metric-label">Patient Comfort</span>
-          <div class="metric-bar-wrap">
-            <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-            <span class="metric-delta"></span>
+      <div class="game-header-inner">
+        <div class="metrics-row">
+          <div class="metric" data-metric="patientComfort">
+            <span class="metric-label">Patient Comfort</span>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+              <span class="metric-delta"></span>
+            </div>
+          </div>
+          <div class="metric" data-metric="staffEffectiveness">
+            <span class="metric-label">Staff Effectiveness</span>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+              <span class="metric-delta"></span>
+            </div>
+          </div>
+          <div class="metric" data-metric="dataReadiness">
+            <span class="metric-label">Data Readiness</span>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+              <span class="metric-delta"></span>
+            </div>
           </div>
         </div>
-        <div class="metric" data-metric="staffEffectiveness">
-          <span class="metric-label">Staff Effectiveness</span>
-          <div class="metric-bar-wrap">
-            <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-            <span class="metric-delta"></span>
+        <div class="countdown-block" id="countdown-block" aria-live="polite">
+          <div class="countdown-ring-wrap">
+            <svg class="countdown-ring" viewBox="0 0 64 64" aria-hidden="true">
+              <circle class="countdown-ring-bg" cx="32" cy="32" r="28" fill="none" stroke-width="4"/>
+              <circle class="countdown-ring-fill" cx="32" cy="32" r="28" fill="none" stroke-width="4" stroke-dasharray="176" stroke-dashoffset="0"/>
+            </svg>
+            <span class="countdown-number" id="countdown-number">8</span>
           </div>
-        </div>
-        <div class="metric" data-metric="dataReadiness">
-          <span class="metric-label">Data Readiness</span>
-          <div class="metric-bar-wrap">
-            <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-            <span class="metric-delta"></span>
-          </div>
+          <span class="countdown-text" id="countdown-text">weeks until audit</span>
         </div>
       </div>
     </header>
@@ -56,17 +69,6 @@
       </div>
       <h3 class="question-title" id="question-title"></h3>
       <div class="answers" id="answers"></div>
-
-      <div class="countdown-block" id="countdown-block" aria-live="polite">
-        <div class="countdown-ring-wrap">
-          <svg class="countdown-ring" viewBox="0 0 64 64" aria-hidden="true">
-            <circle class="countdown-ring-bg" cx="32" cy="32" r="28" fill="none" stroke-width="4"/>
-            <circle class="countdown-ring-fill" cx="32" cy="32" r="28" fill="none" stroke-width="4" stroke-dasharray="176" stroke-dashoffset="0"/>
-          </svg>
-          <span class="countdown-number" id="countdown-number">8</span>
-        </div>
-        <span class="countdown-text" id="countdown-text">weeks until audit</span>
-      </div>
     </main>
 
     <footer class="flow-strip">
