@@ -49,6 +49,8 @@
 
       showDeltaLabels(deltas);
       updateMetricBars();
+      const nextQuestion = state.currentQuestion + 1;
+      if (nextQuestion < 8) updateCountdown(8 - nextQuestion);
 
       setTimeout(() => {
         state.currentQuestion++;
