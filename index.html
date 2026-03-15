@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Patient Journey Simulator — Health Samurai</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/animations.css">
 </head>
@@ -14,9 +17,11 @@
     <div class="start-content">
       <h1>The Patient Journey Simulator</h1>
       <p class="tagline">You've just taken over digital operations at a struggling hospital.</p>
-      <p class="tagline">You have 8 weeks before audit review to reduce intake delays, cut manual work, and improve how patient data moves across care steps.</p>
-      <p class="helper-line">8 weeks. 8 decisions. One final audit result.</p>
-      <p class="challenge-line">Can you make the hospital audit-ready?</p>
+      <p class="tagline">You have 8 weeks before audit review to reduce intake delays, cut manual work, and improve how patient information moves across care steps.</p>
+      <p class="tagline">Across FHIR decisions, adaptive forms decisions, and final rollout choices, every choice shapes patient comfort, staff effectiveness, and data readiness.</p>
+      <p class="tagline">Your goal is to get the hospital ready for audit review.</p>
+      <p class="helper-line">Two blocks. 11 decisions. One final audit result.</p>
+      <p class="challenge-line">Can you make the hospital pass the audit?</p>
       <button type="button" id="btn-start" class="btn-primary">Start</button>
       <p class="disclaimer">No login required. Takes ~5 minutes.</p>
     </div>
@@ -27,25 +32,61 @@
     <header class="game-header">
       <div class="game-header-inner">
         <div class="metrics-row">
-          <div class="metric" data-metric="patientComfort">
-            <span class="metric-label">Patient Comfort</span>
-            <div class="metric-bar-wrap">
-              <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-              <span class="metric-delta"></span>
+          <div class="metric-block" id="metric-block-patientComfort" data-metric="patientComfort" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+            <svg class="metric-block-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="metricGrad-patientComfort" x1="0.5" y1="0" x2="0.14" y2="0" gradientUnits="objectBoundingBox">
+                  <stop offset="0%" stop-color="#B91C1C"/>
+                  <stop offset="25%" stop-color="#F87171"/>
+                  <stop offset="50%" stop-color="#FCD34D"/>
+                  <stop offset="70%" stop-color="#6EE7B7"/>
+                  <stop offset="100%" stop-color="#047857"/>
+                </linearGradient>
+              </defs>
+              <path class="metric-contour-bg" d="M 50 0 L 86 0 A 14 14 0 0 1 100 14 L 100 86 A 14 14 0 0 1 86 100 L 14 100 A 14 14 0 0 1 0 86 L 0 14 A 14 14 0 0 1 14 0 L 50 0 Z" fill="none" vector-effect="non-scaling-stroke"/>
+              <path class="metric-contour-fill" d="M 50 0 L 86 0 A 14 14 0 0 1 100 14 L 100 86 A 14 14 0 0 1 86 100 L 14 100 A 14 14 0 0 1 0 86 L 0 14 A 14 14 0 0 1 14 0" fill="none" stroke="url(#metricGrad-patientComfort)" vector-effect="non-scaling-stroke"/>
+            </svg>
+            <div class="metric-block-content">
+              <span class="metric-block-icon metric-icon-state-red"><svg class="metric-icon metric-icon-person" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 6.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 8c-3.5 0-6.5 1.6-6.5 3.2v2.3h13v-2.3c0-1.6-3-3.2-6.5-3.2z"/></svg></span>
+              <span class="metric-block-label-wrap"><span class="metric-block-label">Patient<br>comfort</span></span>
             </div>
           </div>
-          <div class="metric" data-metric="staffEffectiveness">
-            <span class="metric-label">Staff Effectiveness</span>
-            <div class="metric-bar-wrap">
-              <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-              <span class="metric-delta"></span>
+          <div class="metric-block" id="metric-block-staffEffectiveness" data-metric="staffEffectiveness" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+            <svg class="metric-block-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="metricGrad-staffEffectiveness" x1="0.5" y1="0" x2="0.14" y2="0" gradientUnits="objectBoundingBox">
+                  <stop offset="0%" stop-color="#B91C1C"/>
+                  <stop offset="25%" stop-color="#F87171"/>
+                  <stop offset="50%" stop-color="#FCD34D"/>
+                  <stop offset="70%" stop-color="#6EE7B7"/>
+                  <stop offset="100%" stop-color="#047857"/>
+                </linearGradient>
+              </defs>
+              <path class="metric-contour-bg" d="M 50 0 L 86 0 A 14 14 0 0 1 100 14 L 100 86 A 14 14 0 0 1 86 100 L 14 100 A 14 14 0 0 1 0 86 L 0 14 A 14 14 0 0 1 14 0 L 50 0 Z" fill="none" vector-effect="non-scaling-stroke"/>
+              <path class="metric-contour-fill" d="M 50 0 L 86 0 A 14 14 0 0 1 100 14 L 100 86 A 14 14 0 0 1 86 100 L 14 100 A 14 14 0 0 1 0 86 L 0 14 A 14 14 0 0 1 14 0" fill="none" stroke="url(#metricGrad-staffEffectiveness)" vector-effect="non-scaling-stroke"/>
+            </svg>
+            <div class="metric-block-content">
+              <span class="metric-block-icon metric-icon-state-red"><svg class="metric-icon metric-icon-cross" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></span>
+              <span class="metric-block-label-wrap"><span class="metric-block-label">Staff<br>comfort</span></span>
             </div>
           </div>
-          <div class="metric" data-metric="dataReadiness">
-            <span class="metric-label">Data Readiness</span>
-            <div class="metric-bar-wrap">
-              <div class="metric-bar" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-              <span class="metric-delta"></span>
+          <div class="metric-block" id="metric-block-dataReadiness" data-metric="dataReadiness" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+            <svg class="metric-block-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="metricGrad-dataReadiness" x1="0.5" y1="0" x2="0.14" y2="0" gradientUnits="objectBoundingBox">
+                  <stop offset="0%" stop-color="#B91C1C"/>
+                  <stop offset="25%" stop-color="#F87171"/>
+                  <stop offset="50%" stop-color="#FCD34D"/>
+                  <stop offset="70%" stop-color="#6EE7B7"/>
+                  <stop offset="100%" stop-color="#047857"/>
+                </linearGradient>
+              </defs>
+              <path class="metric-contour-bg" d="M 50 0 L 86 0 A 14 14 0 0 1 100 14 L 100 86 A 14 14 0 0 1 86 100 L 14 100 A 14 14 0 0 1 0 86 L 0 14 A 14 14 0 0 1 14 0 L 50 0 Z" fill="none" vector-effect="non-scaling-stroke"/>
+              <path class="metric-contour-fill" d="M 50 0 L 86 0 A 14 14 0 0 1 100 14 L 100 86 A 14 14 0 0 1 86 100 L 14 100 A 14 14 0 0 1 0 86 L 0 14 A 14 14 0 0 1 14 0" fill="none" stroke="url(#metricGrad-dataReadiness)" vector-effect="non-scaling-stroke"/>
+            </svg>
+            <div class="metric-block-content">
+              <span class="metric-block-icon metric-icon-state-red"><svg class="metric-icon metric-icon-doc" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h11l2 2v14l-2 2H6l-2-2V6l2-2z" fill-opacity="0.22"/><path d="M7 7.5h10v1.2H7zm0 3.2h7v1.2H7zm0 3.2h10v1.2H7zm0 3.2h5v1.2H7z"/></svg></span>
+              <span class="metric-block-label-wrap"><span class="metric-block-label">Data<br>readiness</span></span>
             </div>
           </div>
         </div>
@@ -76,47 +117,21 @@
     </footer>
   </section>
 
-  <!-- Formbox Activation Overlay -->
-  <div id="overlay-formbox-activation" class="overlay" aria-hidden="true">
-    <div class="overlay-card overlay-activation">
-      <div class="gift-icon"><img src="assets/svg/gift-icon.svg" alt=""></div>
-      <p class="overlay-subtitle">You unlocked:</p>
-      <h3 class="overlay-product-name">Formbox by Health Samurai</h3>
-      <div class="overlay-bonuses" id="formbox-activation-bonuses"></div>
-      <p class="overlay-tagline">Design, manage, and deploy digital healthcare forms with built-in FHIR data capture.</p>
-      <button type="button" class="btn-primary overlay-continue" data-overlay="formbox-activation">Continue →</button>
+  <!-- FHIR product reveal (HAPI, Medplum, Aidbox, Firely) -->
+  <div id="overlay-fhir-reveal" class="overlay" aria-hidden="true">
+    <div class="overlay-card overlay-reveal">
+      <h3 class="overlay-product-name"></h3>
+      <p class="overlay-product-subtitle"></p>
+      <button type="button" class="btn-primary overlay-continue" data-overlay="fhir-reveal">Continue →</button>
     </div>
   </div>
 
-  <!-- Formbox Pain Screen -->
-  <div id="overlay-formbox-pain" class="overlay" aria-hidden="true">
-    <div class="overlay-card overlay-pain">
-      <h3>Your intake still creates friction.</h3>
-      <p>Patients repeat information.<br>Staff fills gaps manually.<br>Structured data isn't stable yet.</p>
-      <button type="button" class="btn-primary" data-pain="formbox-activate">Activate Formbox — fix this now</button>
-      <button type="button" class="btn-secondary" data-pain="formbox-skip">Continue without it</button>
-    </div>
-  </div>
-
-  <!-- Aidbox Activation Overlay -->
-  <div id="overlay-aidbox-activation" class="overlay" aria-hidden="true">
-    <div class="overlay-card overlay-activation">
-      <div class="gift-icon"><img src="assets/svg/gift-icon.svg" alt=""></div>
-      <p class="overlay-subtitle">You unlocked:</p>
-      <h3 class="overlay-product-name">Aidbox FHIR Server</h3>
-      <div class="overlay-bonuses" id="aidbox-activation-bonuses"></div>
-      <p class="overlay-tagline">Patient data now flows across the journey.<br>Powered by Aidbox FHIR Server.</p>
-      <button type="button" class="btn-primary overlay-continue" data-overlay="aidbox-activation">Continue →</button>
-    </div>
-  </div>
-
-  <!-- Aidbox Pain Screen -->
-  <div id="overlay-aidbox-pain" class="overlay" aria-hidden="true">
-    <div class="overlay-card overlay-pain">
-      <h3>Your patient flow still breaks between steps.</h3>
-      <p>Data is collected, but not reused across the journey.<br>Each handoff starts from scratch.</p>
-      <button type="button" class="btn-primary" data-pain="aidbox-activate">Activate Aidbox FHIR Server — connect the flow</button>
-      <button type="button" class="btn-secondary" data-pain="aidbox-skip">Continue without it</button>
+  <!-- Adaptive forms product reveal (Formstack, form.io, Formbox, Luma Health) -->
+  <div id="overlay-forms-reveal" class="overlay" aria-hidden="true">
+    <div class="overlay-card overlay-reveal">
+      <h3 class="overlay-product-name"></h3>
+      <p class="overlay-product-subtitle"></p>
+      <button type="button" class="btn-primary overlay-continue" data-overlay="forms-reveal">Continue →</button>
     </div>
   </div>
 

@@ -2,7 +2,8 @@
  * DOM updates: metrics, scene, answers, flow strip, screens.
  */
 const METRIC_KEYS = ['patientComfort', 'staffEffectiveness', 'dataReadiness'];
-const METRIC_LABELS = { patientComfort: 'Patient Comfort', staffEffectiveness: 'Staff Effectiveness', dataReadiness: 'Data Readiness' };
+const METRIC_LABELS = { patientComfort: 'Patient Comfort', staffEffectiveness: 'Staff Comfort', dataReadiness: 'Data Readiness' };
+const TOTAL_STEPS = 11;
 
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -10,103 +11,120 @@ function showScreen(screenId) {
   if (screen) screen.classList.add('active');
 }
 
-function updateMetricBars() {
-  METRIC_KEYS.forEach(key => {
-    const bar = document.querySelector(`.metric[data-metric="${key}"] .metric-bar`);
-    const val = state.metrics[key];
-    if (bar) {
-      bar.style.width = val + '%';
-      bar.setAttribute('aria-valuenow', val);
-    }
-  });
+/** Open contour path length (no closing segment 14,0→50,0): red→yellow→green along path. */
+const METRIC_CONTOUR_PERIMETER = 252 + 28 * Math.PI;
+
+/** Icon color by metric value (0–100), aligned with progress bar: red → yellow → green. */
+function metricValueToColor(val) {
+  if (val < 40) return 'red';
+  if (val < 70) return 'yellow';
+  return 'green';
 }
 
-function showDeltaLabels(deltas) {
-  METRIC_KEYS.forEach(key => {
-    const wrap = document.querySelector(`.metric[data-metric="${key}"] .metric-delta`);
-    if (!wrap) return;
-    const d = deltas[key];
-    if (d === undefined || d === 0) {
-      wrap.textContent = '';
-      wrap.className = 'metric-delta';
-      return;
+function updateMetricBars() {
+  METRIC_KEYS.forEach(function (key) {
+    var block = document.getElementById('metric-block-' + key);
+    if (!block) return;
+    var fillEl = block.querySelector('.metric-contour-fill');
+    var iconWrap = block.querySelector('.metric-block-icon');
+    var val = state.metrics[key];
+    block.setAttribute('aria-valuenow', val);
+    if (fillEl) {
+      var filled = (val / 100) * METRIC_CONTOUR_PERIMETER;
+      fillEl.style.strokeDasharray = filled + ' ' + METRIC_CONTOUR_PERIMETER;
+      fillEl.style.strokeDashoffset = '0';
     }
-    wrap.textContent = (d > 0 ? '+' : '') + d;
-    wrap.className = 'metric-delta visible ' + (d > 0 ? 'positive' : 'negative');
-    setTimeout(() => {
-      wrap.classList.remove('visible');
-      setTimeout(() => { wrap.textContent = ''; }, 400);
-    }, 1200);
+    if (iconWrap) {
+      var stateColor = metricValueToColor(val);
+      iconWrap.classList.remove('metric-icon-state-red', 'metric-icon-state-yellow', 'metric-icon-state-green');
+      iconWrap.classList.add('metric-icon-state-' + stateColor);
+    }
   });
 }
 
 const COUNTDOWN_RING_CIRCUMFERENCE = 2 * Math.PI * 28;
 
-function updateCountdown(weeksLeft) {
+function updateCountdown(stepsLeft) {
   const block = document.getElementById('countdown-block');
   const numberEl = document.getElementById('countdown-number');
   const textEl = document.getElementById('countdown-text');
   const fillEl = document.querySelector('.countdown-ring-fill');
   if (!block || !numberEl || !textEl || !fillEl) return;
-  numberEl.textContent = weeksLeft;
-  textEl.textContent = weeksLeft === 1 ? 'week until audit' : 'weeks until audit';
-  const offset = COUNTDOWN_RING_CIRCUMFERENCE * (1 - weeksLeft / 8);
+  numberEl.textContent = stepsLeft;
+  textEl.textContent = stepsLeft === 1 ? 'step left' : 'steps left';
+  const offset = COUNTDOWN_RING_CIRCUMFERENCE * (1 - stepsLeft / TOTAL_STEPS);
   fillEl.style.strokeDasharray = COUNTDOWN_RING_CIRCUMFERENCE;
   fillEl.style.strokeDashoffset = offset;
 }
 
+/** Hidden scoring: Green = +8, Yellow = +3, Red = -1. Only these deltas are used for scenario answers. */
+function metricColor(delta) {
+  if (delta == null) return 'yellow';
+  if (delta === 8) return 'green';
+  if (delta === 3) return 'yellow';
+  if (delta === -1) return 'red';
+  return 'yellow';
+}
+
+var METRIC_ICONS = {
+  patient: '<svg class="metric-icon metric-icon-person" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 6.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 8c-3.5 0-6.5 1.6-6.5 3.2v2.3h13v-2.3c0-1.6-3-3.2-6.5-3.2z"/></svg>',
+  staff: '<svg class="metric-icon metric-icon-cross" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg>',
+  data: '<svg class="metric-icon metric-icon-doc" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h11l2 2v14l-2 2H6l-2-2V6l2-2z" fill-opacity="0.22"/><path d="M7 7.5h10v1.2H7zm0 3.2h7v1.2H7zm0 3.2h10v1.2H7zm0 3.2h5v1.2H7z"/></svg>'
+};
+
+function renderMetricIndicators(opt) {
+  if (opt.productId != null) return '';
+  const pc = metricColor(opt.pc);
+  const se = metricColor(opt.se);
+  const dr = metricColor(opt.dr);
+  return '<span class="answer-metrics" aria-hidden="true">' +
+    '<span class="answer-metric answer-metric-' + pc + '" title="Patient Comfort">' + METRIC_ICONS.patient + '</span>' +
+    '<span class="answer-metric answer-metric-' + se + '" title="Staff Comfort">' + METRIC_ICONS.staff + '</span>' +
+    '<span class="answer-metric answer-metric-' + dr + '" title="Data Readiness">' + METRIC_ICONS.data + '</span>' +
+    '</span>';
+}
+
 /**
- * Resolves title and sceneText for the current question.
- * For Q1: uses q.title and q.sceneText.
- * For Q2–Q8: uses sceneVariants based on previousAnswerIndex (0→a, 1→b, 2→c).
+ * Resolves title and sceneText. Optional blockIntro is prepended for block-start questions.
  */
 function getSceneForQuestion(q, previousAnswerIndex) {
   if (q.sceneVariants != null && previousAnswerIndex != null && previousAnswerIndex >= 0) {
-    const key = ['a', 'b', 'c'][previousAnswerIndex];
+    const key = ['a', 'b', 'c', 'd'][previousAnswerIndex];
     const variant = q.sceneVariants[key];
-    if (variant) return { title: variant.title, sceneText: variant.sceneText };
+    if (variant) return { title: variant.title, sceneText: variant.sceneText, blockIntro: q.blockIntro };
   }
-  return { title: q.title, sceneText: q.sceneText || q.scene || '' };
+  return { title: q.title, sceneText: q.sceneText || q.scene || '', blockIntro: q.blockIntro };
 }
 
 function renderQuestion(q, previousAnswerIndex) {
-  const weeksLeft = 8 - state.currentQuestion;
-  updateCountdown(weeksLeft);
+  const stepsLeft = TOTAL_STEPS - state.currentQuestion;
+  updateCountdown(stepsLeft);
 
   const scene = getSceneForQuestion(q, previousAnswerIndex);
   const sceneTitleEl = document.getElementById('scene-title');
   if (sceneTitleEl) sceneTitleEl.textContent = scene.title || '';
 
-  document.getElementById('scene-text').textContent = scene.sceneText;
+  const sceneTextEl = document.getElementById('scene-text');
+  const fullText = scene.blockIntro ? scene.blockIntro + '\n\n' + scene.sceneText : scene.sceneText;
+  sceneTextEl.textContent = fullText;
+
   document.getElementById('question-title').textContent = q.question || q.title;
 
+  const isProductFit = q.isProductFit === true;
   const answersEl = document.getElementById('answers');
-  answersEl.innerHTML = q.options.map((opt, i) =>
-    `<button type="button" class="answer-btn" data-option-index="${i}" data-pc="${opt.pc}" data-se="${opt.se}" data-dr="${opt.dr}">
-      ${opt.text}
-    </button>`
-  ).join('');
+  answersEl.innerHTML = q.options.map((opt, i) => {
+    const metricsHtml = isProductFit ? '' : renderMetricIndicators(opt);
+    return `<button type="button" class="answer-btn" data-option-index="${i}">
+      <span class="answer-btn-text">${opt.text}</span>${metricsHtml}
+    </button>`;
+  }).join('');
 }
 
 function renderFlowStrip() {
   const container = document.getElementById('flow-dots');
   if (!container) return;
   container.innerHTML = '';
-  for (let i = 0; i < 8; i++) {
-    if (i === 4 && state.formboxActive) {
-      const badgeF = document.createElement('span');
-      badgeF.className = 'flow-badge flow-badge-formbox';
-      badgeF.textContent = 'F';
-      badgeF.setAttribute('aria-hidden', 'true');
-      container.appendChild(badgeF);
-    }
-    if (i === 7 && state.aidboxActive) {
-      const badgeA = document.createElement('span');
-      badgeA.className = 'flow-badge flow-badge-aidbox';
-      badgeA.textContent = 'A';
-      badgeA.setAttribute('aria-hidden', 'true');
-      container.appendChild(badgeA);
-    }
+  for (let i = 0; i < TOTAL_STEPS; i++) {
     const dot = document.createElement('span');
     dot.className = 'flow-dot';
     dot.setAttribute('data-step', i);
@@ -140,18 +158,11 @@ function renderOutcome() {
 
   let outcomeKey, title, subtitle, metricsHtml;
 
-  // Copy per spec: top-tier positive, mid-tier respectful, low-tier concise and shareable.
-  if (state.formboxActive && state.aidboxActive) {
-    if (avg >= 80 && minMetric >= 72) {
-      outcomeKey = 'smooth';
-      title = 'Audit-Ready Hospital';
-      subtitle = 'You stabilized intake, improved team workflow, and connected the patient journey before audit review.';
-    } else {
-      outcomeKey = 'partial';
-      title = 'Digitally Stabilized Hospital';
-      subtitle = 'You improved key parts of the hospital journey and made operations more stable before audit review.';
-    }
-  } else if (avg >= 58 || state.formboxActive || state.aidboxActive) {
+  if (avg >= 72 && minMetric >= 65) {
+    outcomeKey = 'smooth';
+    title = 'Audit-Ready Hospital';
+    subtitle = 'You stabilized intake, improved team workflow, and connected the patient journey before audit review.';
+  } else if (avg >= 50 || minMetric >= 40) {
     outcomeKey = 'partial';
     title = 'Digitally Stabilized Hospital';
     subtitle = 'You improved key parts of the hospital journey and made operations more stable before audit review.';
@@ -161,10 +172,17 @@ function renderOutcome() {
     subtitle = 'The hospital still needs stronger system-wide improvements to reduce friction and manual rework.';
   }
 
+  const productsHtml = [state.selectedFhirProduct, state.selectedFormsProduct].filter(Boolean).length
+    ? `<p class="outcome-products">Your FHIR path: ${state.selectedFhirProduct || '—'}. Your forms path: ${state.selectedFormsProduct || '—'}.</p>`
+    : '';
+
   metricsHtml = METRIC_KEYS.map(key => {
     const v = state.metrics[key];
     const pct = Math.round(v);
-    return `<div class="outcome-metric"><span class="outcome-metric-label">${METRIC_LABELS[key]}</span><div class="outcome-metric-bar"><div class="outcome-metric-fill" style="width:${pct}%"></div></div><span class="outcome-metric-pct">${pct}%</span></div>`;
+    const fillStyle = pct > 0
+      ? `width:${pct}%; background-size:${(100 / pct) * 100}% 100%; background-position:0 0`
+      : 'width:0%';
+    return `<div class="outcome-metric"><span class="outcome-metric-label">${METRIC_LABELS[key]}</span><div class="outcome-metric-bar"><div class="outcome-metric-fill" style="${fillStyle}"></div></div><span class="outcome-metric-pct">${pct}%</span></div>`;
   }).join('');
 
   const showInvite = !!(state.lead.name || state.lead.email);
@@ -175,7 +193,6 @@ function renderOutcome() {
       <a href="#" class="btn-secondary">Register your spot</a>
     </div>` : '';
 
-  // Hierarchy: Congratulations! → Audit complete → Your result: → outcome title → description
   document.getElementById('outcome-content').innerHTML = `
     <div id="outcome-card-export" class="outcome-card-export">
       <p class="outcome-congratulations">Congratulations!</p>
@@ -183,6 +200,7 @@ function renderOutcome() {
       <p class="outcome-your-result-label">Your result:</p>
       <h2 class="outcome-title">${title}</h2>
       <p class="outcome-subtitle">${subtitle}</p>
+      ${productsHtml}
       <div class="outcome-metrics">${metricsHtml}</div>
     </div>
     ${inviteHtml}

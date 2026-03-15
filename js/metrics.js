@@ -1,54 +1,30 @@
 /**
- * Metric caps per stage and applyDelta logic.
- * Before Formbox: 58/58/58
- * After Formbox, before Aidbox: 80/78/86
- * After Aidbox: 100/100/100
+ * Metric caps and applyDelta logic. All metrics 0–100.
+ * Scenario answers apply deltas; product-fit choices add +10 to each metric (20 total per metric for 2 products).
  */
-function getCurrentCap(metric) {
-  if (state.aidboxActive) return 100;
-  if (state.formboxActive) {
-    if (metric === 'patientComfort') return 80;
-    if (metric === 'staffEffectiveness') return 78;
-    if (metric === 'dataReadiness') return 86;
-  }
-  return 58;
+const METRIC_CAP = 100;
+const PRODUCT_SELECTION_BONUS = 10;
+
+function getCurrentCap() {
+  return METRIC_CAP;
 }
 
 function applyDelta(metric, delta) {
-  const cap = getCurrentCap(metric);
+  if (delta == null) return;
+  const cap = getCurrentCap();
   state.metrics[metric] = Math.min(cap, Math.max(0, state.metrics[metric] + delta));
 }
 
+/** Add +10 to each metric when the player selects a product (FHIR or Forms). Called twice per game. */
+function applyProductSelectionBonus() {
+  applyDelta('patientComfort', PRODUCT_SELECTION_BONUS);
+  applyDelta('staffEffectiveness', PRODUCT_SELECTION_BONUS);
+  applyDelta('dataReadiness', PRODUCT_SELECTION_BONUS);
+}
+
 function applyOptionDeltas(option) {
+  if (option.productId != null) return;
   applyDelta('patientComfort', option.pc);
   applyDelta('staffEffectiveness', option.se);
   applyDelta('dataReadiness', option.dr);
-  state.formboxFit = Math.min(4, state.formboxFit + (option.fb || 0));
-  state.aidboxFit = Math.min(3, state.aidboxFit + (option.ab || 0));
-}
-
-function applyFormboxActivationBonus(isAuto) {
-  if (isAuto) {
-    applyDelta('patientComfort', 14);
-    applyDelta('staffEffectiveness', 10);
-    applyDelta('dataReadiness', 18);
-  } else {
-    applyDelta('patientComfort', 10);
-    applyDelta('staffEffectiveness', 7);
-    applyDelta('dataReadiness', 14);
-  }
-  state.formboxActive = true;
-}
-
-function applyAidboxActivationBonus(isAuto) {
-  if (isAuto) {
-    applyDelta('patientComfort', 10);
-    applyDelta('staffEffectiveness', 15);
-    applyDelta('dataReadiness', 18);
-  } else {
-    applyDelta('patientComfort', 8);
-    applyDelta('staffEffectiveness', 11);
-    applyDelta('dataReadiness', 14);
-  }
-  state.aidboxActive = true;
 }

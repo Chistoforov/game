@@ -1,188 +1,167 @@
 /**
- * All 8 questions with scene variants, week labels, options, and deltas.
- * PC = Patient Comfort, SE = Staff Effectiveness, DR = Data Readiness
- * FB = Formbox Fit, AB = Aidbox Fit
- * Deltas tuned with step boosts: positive pc/se +2 or +3, positive dr +1 (see scoring_tuning_update_step_boosts.md).
+ * Game script: Block 1 (FHIR Server) — Q1–Q4 + product-fit → HAPI/Medplum/Aidbox/Firely.
+ * Block 2 (Adaptive Forms) — Q5–Q8 + product-fit → Formstack/form.io/Formbox/Luma Health.
+ * PC = Patient Comfort, SE = Staff Effectiveness, DR = Data Readiness.
+ * Metric indicators: green = improves, yellow = partial, red = worsens (no numeric display).
  */
+const BLOCK_INTROS = {
+  fhir: 'You have inherited a hospital environment where patient information moves inconsistently across registration, departments, and partner workflows. Some teams have created local fixes that help in the moment, but they do not always scale well across the full care journey. Over the next few weeks, you need to improve reliability without losing momentum on day-to-day operations.',
+  forms: 'Your hospital has already moved some intake steps into digital channels, but the experience is still uneven across clinics and patient types. Some forms are easier to launch than to maintain, and some collect information that is not easy to reuse later in the journey. The next set of decisions is about making intake more adaptable without adding complexity for staff or patients.'
+};
+
 const QUESTIONS = [
+  // —— Block 1: FHIR Server ——
   {
-    id: "q1",
-    weekLabel: "8 weeks until audit",
-    title: "Morning Bottleneck",
-    sceneText: "It is Monday, 8:10 AM. The registration area is already backed up, several patients are late for diagnostics, and staff say the morning check-in process is too slow to handle volume. The CFO messages you: \"We cannot start every week like this.\"",
-    question: "What do you do first?",
+    id: 'q1',
+    blockIntro: BLOCK_INTROS.fhir,
+    title: 'Monday, 8:10 AM',
+    sceneText: 'The registration area is already backed up. Several patients are late for diagnostics, the front desk is juggling phone calls, and a line is starting to form near the self-check-in kiosk. A message from the CFO appears on your screen: "We cannot start every week like this. Fix the bottleneck before it hits revenue and patient satisfaction again." Any near-term change has to fit the current operational setup rather than depend on a major redesign.',
+    question: 'How do you reduce the morning registration bottleneck?',
     options: [
-      { id: "a", text: "Split the line into express check-in and full check-in.", pc: 3, se: 3, dr: 0, fb: 0, ab: 0 },
-      { id: "b", text: "Send patients a pre-visit form so part of the intake is completed before arrival.", pc: 6, se: 4, dr: 4, fb: 1, ab: 0 },
-      { id: "c", text: "Cut registration to the minimum and collect the rest later.", pc: 4, se: 0, dr: -1, fb: 0, ab: 0 }
+      { id: 'a', text: 'Open a fast lane for returning patients and temporarily move one nurse from triage to support check-in.', pc: 8, se: -1, dr: 3 },
+      { id: 'b', text: 'Cut registration to the minimum required questions and ask departments to collect missing details later.', pc: 8, se: 3, dr: -1 },
+      { id: 'c', text: 'Prepare a daily pre-filled registration list from scheduled appointments so staff type less at the desk.', pc: 3, se: 8, dr: -1 },
+      { id: 'd', text: 'Prioritize patients heading to diagnostics first and move routine follow-ups into a slower secondary lane.', pc: -1, se: 8, dr: 3 }
     ]
   },
   {
-    id: "q2",
-    weekLabel: "7 weeks until audit",
-    sceneVariants: {
-      a: {
-        title: "Uneven Intake",
-        sceneText: "The queue is shorter, but now the express lane captures too little while the full lane captures too much. The head nurse says intake quality now depends on which line a patient happened to enter."
-      },
-      b: {
-        title: "Abandoned Forms",
-        sceneText: "Some patients arrive with data already completed, but many open the form on their phone and abandon it halfway through. The front desk is calmer, but triage is now dealing with inconsistent and incomplete intake."
-      },
-      c: {
-        title: "Deferred Work",
-        sceneText: "Registration moves faster, but missing details now surface later in the journey. Nurses say they are manually recovering information that was intentionally postponed at the front desk."
-      }
-    },
-    question: "How do you improve intake quality without bringing back the morning bottleneck?",
+    id: 'q2',
+    title: 'By noon',
+    sceneText: 'Complaints shift from waiting time to repetition. One patient says she has now given her contact details, medication list, and insurance information three times in one visit. The outpatient lead pings you: "We are moving people through the building, but not their information." The team needs a practical way to reduce repetition without introducing another workaround that staff will have to maintain manually.',
+    question: 'How do you reduce repeated questions across departments?',
     options: [
-      { id: "a", text: "Make more fields optional and validate them later during the visit.", pc: 3, se: 4, dr: -1, fb: 0, ab: 0 },
-      { id: "b", text: "Break intake into short adaptive steps so each patient sees only relevant questions.", pc: 6, se: 4, dr: 4, fb: 1, ab: 0 },
-      { id: "c", text: "Have registration staff fill the gaps manually at the desk.", pc: 3, se: 3, dr: 0, fb: 0, ab: 0 }
+      { id: 'a', text: 'Print a short intake summary at registration and ask patients to carry it from one department to the next.', pc: 3, se: 8, dr: -1 },
+      { id: 'b', text: 'Tell departments to skip repeated questions unless staff notice a clear inconsistency.', pc: 8, se: 3, dr: -1 },
+      { id: 'c', text: 'Add a patient-flow coordinator who reconciles mismatched answers before the next appointment starts.', pc: 3, se: -1, dr: 8 },
+      { id: 'd', text: 'Introduce one shared core intake block for all departments, while specialty questions stay local.', pc: 8, se: -1, dr: 3 }
     ]
   },
   {
-    id: "q3",
-    weekLabel: "6 weeks until audit",
-    sceneVariants: {
-      a: {
-        title: "Too Many Exceptions",
-        sceneText: "You reduced intake friction, but each department now has its own idea of what can be clarified later. A patient complains that the same information is being collected again during the next care step."
-      },
-      b: {
-        title: "Good Intake, Poor Reuse",
-        sceneText: "The intake flow is cleaner, but the next team still does not use the answers already collected. A patient says, \"I already filled this in,\" and the department lead asks why data is not being reused across steps."
-      },
-      c: {
-        title: "Manual Transfer",
-        sceneText: "Front-desk staff started filling gaps by hand, but this slowed down the process and introduced new errors. Now teams are copying information between screens and complaining about duplicate work."
-      }
-    },
-    question: "How do you stop the same patient data from being collected again later in the journey?",
+    id: 'q3',
+    title: 'Data handoff',
+    sceneText: 'A patient completes diagnostics, but the specialist still cannot see the updated medication note and calls the department directly. Another case is held for ten minutes because the receiving team is not sure which prep instructions were already given. A message from the medical director lands: "Why are clinicians still chasing information in chats and calls?" Whatever you improve here has to work in real clinical conditions, not just on paper.',
+    question: 'How do you improve data handoff between care steps?',
     options: [
-      { id: "a", text: "Reuse previously captured answers across steps and keep forms structurally connected.", pc: 4, se: 4, dr: 3, fb: 1, ab: 0 },
-      { id: "b", text: "Keep forms separate and let staff manually transfer relevant answers when needed.", pc: 3, se: 0, dr: -1, fb: 0, ab: 0 },
-      { id: "c", text: "Remove questions from the second step, even if some data will be missing later.", pc: 3, se: 4, dr: -1, fb: 0, ab: 0 }
+      { id: 'a', text: 'Require the sending team to email a short patient summary before every internal transfer.', pc: 8, se: -1, dr: 3 },
+      { id: 'b', text: 'Let the receiving team confirm missing details directly with the patient at the next step.', pc: -1, se: 8, dr: 3 },
+      { id: 'c', text: 'Make transfer completion depend on a mandatory handoff checklist filled out by the sending team.', pc: 3, se: -1, dr: 8 },
+      { id: 'd', text: 'Use a shared hourly handoff board so departments see the latest status in one place before calling each other.', pc: -1, se: 3, dr: 8 }
     ]
   },
   {
-    id: "q4",
-    weekLabel: "5 weeks until audit",
-    sceneVariants: {
-      a: {
-        title: "A New Version Is Needed Tomorrow",
-        sceneText: "Cross-step reuse is starting to work, and one clinic immediately asks for an updated intake flow for a new patient stream tomorrow morning. IT says the next release window is in three weeks."
-      },
-      b: {
-        title: "The Process Depends on People",
-        sceneText: "Manual transfer kept things moving for a while, but any change now breaks the chain. The chief physician asks for an urgent intake update, and the team says it will become another manual workaround unless something changes."
-      },
-      c: {
-        title: "Simplified Too Far",
-        sceneText: "Complaints about repeated questions are down, but several clinics now say critical data is missing later in the journey. One department demands that a missing intake section be restored by tomorrow."
-      }
-    },
-    question: "How do you handle the urgent change?",
+    id: 'q4',
+    title: 'New partner workflow',
+    sceneText: 'The hospital is preparing to launch a new pre-op testing workflow with an external lab partner. Commercially, the timing matters: leadership wants it live this month. The partnerships manager sends a blunt note: "Every new workflow feels like a new integration project. We cannot keep rebuilding the hospital from scratch." Leadership wants an approach that helps with this launch and does not make future partner onboarding harder.',
+    question: 'How do you launch the new partner workflow?',
     options: [
-      { id: "a", text: "Use a paper addendum for one day and integrate it later.", pc: 3, se: 0, dr: -2, fb: 0, ab: 0 },
-      { id: "b", text: "Let the operations team publish a new form version without waiting for a release cycle.", pc: 6, se: 4, dr: 4, fb: 1, ab: 0 },
-      { id: "c", text: "Freeze the change until the next scheduled IT cycle.", pc: 3, se: 3, dr: -1, fb: 0, ab: 0 }
+      { id: 'a', text: 'Start immediately with PDF results by email and let staff upload them into existing records manually.', pc: 8, se: -1, dr: 3 },
+      { id: 'b', text: 'Build a custom one-off connection only for this lab so the workflow can go live quickly.', pc: 8, se: 3, dr: -1 },
+      { id: 'c', text: 'Reduce scope and launch only one high-priority test package while keeping the rest on the current process.', pc: -1, se: 8, dr: 3 },
+      { id: 'd', text: 'Define a standard partner data template and onboarding pattern before connecting any new external service.', pc: 3, se: -1, dr: 8 }
+    ]
+  },
+  // Product-fit: FHIR Server (no metric icons, no numeric impact)
+  {
+    id: 'q5-fhir-fit',
+    isProductFit: true,
+    productBlock: 'fhir',
+    title: 'FHIR server path',
+    sceneText: 'You improved parts of the journey, but the hospital still depends on a mix of local fixes, departmental workarounds, and partner-specific processes. Some improvements helped immediately, yet the underlying operating model still makes information flow harder to manage than it should be. The next step is to choose a FHIR server path that fits how your hospital needs to move forward.',
+    question: 'What kind of FHIR server path best fits your hospital right now?',
+    options: [
+      { id: 'a', text: 'We need maximum control and a self-managed path our technical team can shape over time.', productId: 'HAPI' },
+      { id: 'b', text: 'We need a platform-oriented path for building new workflows and digital applications around care delivery.', productId: 'Medplum' },
+      { id: 'c', text: 'We need a path that supports faster rollout and dependable operations without unnecessary infrastructure burden.', productId: 'Aidbox' },
+      { id: 'd', text: 'We need a standards-led enterprise path with strong interoperability and governance.', productId: 'Firely' }
+    ]
+  },
+  // —— Block 2: Adaptive Medical Forms ——
+  {
+    id: 'q6',
+    blockIntro: BLOCK_INTROS.forms,
+    title: 'Tuesday, 7:40 AM',
+    sceneText: 'Your outpatient clinics are no longer struggling only with queues — now they are struggling with drop-off before the visit even starts. Many patients receive a long pre-visit form, open it once, and leave it unfinished. By the time they arrive, registration still has to chase missing details at the front desk. A message from the ambulatory care lead pops up: "We moved intake earlier, but we did not actually make it easier." The team wants a simpler intake experience without fragmenting the process even more.',
+    question: 'How do you improve pre-visit intake completion?',
+    options: [
+      { id: 'a', text: 'Send one short universal intake form before the visit and collect specialty details on-site.', pc: 8, se: 3, dr: -1 },
+      { id: 'b', text: 'Keep the full intake form, but have the call center help patients complete it before arrival.', pc: 3, se: -1, dr: 8 },
+      { id: 'c', text: 'Ask patients to arrive 20 minutes early and complete digital intake at kiosks in the waiting area.', pc: -1, se: 8, dr: 3 },
+      { id: 'd', text: 'Split intake into a basic pre-visit form and a second follow-up form for selected visit types.', pc: 8, se: -1, dr: 3 }
     ]
   },
   {
-    id: "q5",
-    weekLabel: "4 weeks until audit",
-    sceneVariants: {
-      a: {
-        title: "Paper Is Back in the Process",
-        sceneText: "The paper addendum saved one day, but now someone has to manually transfer that information into the system. The next care team says they still do not have a full picture and are starting from scratch again."
-      },
-      b: {
-        title: "Better Intake, Broken Handoff",
-        sceneText: "Forms can now change faster, and intake finally feels more manageable, but the data still gets stuck at the point of entry. A physician asks, \"Why can't we see what was already collected before the patient reached us?\""
-      },
-      c: {
-        title: "The Cost of Waiting",
-        sceneText: "You delayed the change, and departments started building workarounds of their own. As a result, the next team no longer trusts intake data and prefers to collect context again at every handoff."
-      }
-    },
-    question: "How do you fix the gap between care steps?",
+    id: 'q7',
+    title: 'By midday',
+    sceneText: 'Registration is no longer drowning in paper packets, but scanned PDFs, email attachments, and half-completed digital forms still have to be reviewed and re-entered manually into downstream systems. Staff keep opening the same patient record in multiple screens just to copy data across. The front-desk supervisor writes: "We digitized the form, but not the work." The issue is no longer just form completion — it is what happens to the answers after they are submitted.',
+    question: 'How do you reduce re-entry and fragmented intake handling?',
     options: [
-      { id: "a", text: "Send the next team a short summary before the patient arrives.", pc: 3, se: 3, dr: 0, fb: 0, ab: 0 },
-      { id: "b", text: "Let each team re-collect only the context they need.", pc: 4, se: 3, dr: -1, fb: 0, ab: 0 },
-      { id: "c", text: "Route patient data through a shared layer accessible across the whole journey.", pc: 4, se: 4, dr: 4, fb: 0, ab: 1 }
+      { id: 'a', text: 'Let staff scan submitted forms into the patient record and re-enter missing details only when they become necessary.', pc: 8, se: -1, dr: 3 },
+      { id: 'b', text: 'Replace the long intake packet with a short digital check-in and keep the remaining paperwork in separate follow-up steps.', pc: 8, se: 3, dr: -1 },
+      { id: 'c', text: 'Add one intake coordinator to review incomplete submissions before patients reach the desk.', pc: 3, se: -1, dr: 8 },
+      { id: 'd', text: 'Standardize one digital intake packet for the top three clinics first and leave the rest on current processes.', pc: 3, se: 8, dr: -1 }
     ]
   },
   {
-    id: "q6",
-    weekLabel: "3 weeks until audit",
-    sceneVariants: {
-      a: {
-        title: "Summaries Go Stale",
-        sceneText: "Short summaries helped for a few days, but now different teams are working from different versions of the same information. One department has already built its own local handoff solution, and three more want the same."
-      },
-      b: {
-        title: "Every Team Lives Separately",
-        sceneText: "Repeated re-collection is becoming the new normal, and every department is optimizing around itself. The CIO warns that the hospital is drifting toward another set of disconnected local solutions."
-      },
-      c: {
-        title: "Everyone Wants In",
-        sceneText: "The idea of a shared layer is gaining traction, and multiple departments now want to connect to it. But without a common architecture, a promising direction could quickly turn into a patchwork of special cases."
-      }
-    },
-    question: "What do you do next?",
+    id: 'q8',
+    title: 'Compliance update',
+    sceneText: 'A new compliance update lands on your desk, and every department reacts differently. Cardiology has its own form version, orthopedics has another, and surgery still uses a PDF that no one wants to touch because "it mostly works." What should be a simple change now requires multiple edits, approvals, and follow-up emails. The quality manager messages you: "We do not have one form system — we have a collection of local exceptions." The larger challenge is keeping forms aligned without forcing every clinic into exactly the same workflow.',
+    question: 'How do you make form updates easier across departments?',
     options: [
-      { id: "a", text: "Allow a local handoff solution for one department to relieve pressure quickly.", pc: 3, se: 3, dr: -2, fb: 0, ab: 0 },
-      { id: "b", text: "Build a reusable routing layer that all departments can use.", pc: 4, se: 6, dr: 4, fb: 0, ab: 1 },
-      { id: "c", text: "Do nothing for now and revisit the issue at the end of the quarter.", pc: 3, se: 0, dr: -1, fb: 0, ab: 0 }
+      { id: 'a', text: 'Let each department keep its own forms and add only one shared cover sheet for basic patient details.', pc: 3, se: 8, dr: -1 },
+      { id: 'b', text: 'Route every form change through a central governance group before anything goes live.', pc: -1, se: 3, dr: 8 },
+      { id: 'c', text: 'Freeze non-critical form changes until the next quarterly review cycle.', pc: -1, se: 8, dr: 3 },
+      { id: 'd', text: 'Create a shared question library for repeated fields, while departments keep local versions of specialty sections.', pc: 3, se: -1, dr: 8 }
     ]
   },
   {
-    id: "q7",
-    weekLabel: "2 weeks until audit",
-    sceneVariants: {
-      a: {
-        title: "Patchwork Hospital",
-        sceneText: "The local solution worked for one department, but now the hospital has several different ways of passing patient data between steps. During audit preparation, a clinician opens a patient record and sees conflicting data from different parts of the journey."
-      },
-      b: {
-        title: "A Single Patient View Is Still Missing",
-        sceneText: "The reusable routing layer is stabilizing handoffs, but auditors now ask how the hospital knows which patient record is current at each moment in the journey. The team realizes that routing alone is not enough; trust in the data still depends on a reliable shared view."
-      },
-      c: {
-        title: "The Price of Inaction",
-        sceneText: "You postponed the architecture decision, and departments continued to operate in separate process islands. Now conflicting patient data is visible in the record, and no one can quickly explain which version is correct."
-      }
-    },
-    question: "How do you establish a reliable current patient view?",
+    id: 'q9',
+    title: 'Pre-op workflow',
+    sceneText: 'The final pressure point appears in a new pre-op workflow. Low-risk patients are still asked the same long checklist as complex cases, while some higher-risk cases trigger follow-up calls because staff need clarification after the form is submitted. Nurses say the process is too rigid for patients and too manual for the team. A note from the operations director appears: "Why are our digital forms still behaving like static PDFs?" The team needs a more adaptive approach, but it also needs consistency in how answers are handled across workflows.',
+    question: 'How do you make intake smarter for different patient scenarios?',
     options: [
-      { id: "a", text: "Treat the most recent entry as the main one and resolve discrepancies later.", pc: 3, se: 3, dr: -1, fb: 0, ab: 0 },
-      { id: "b", text: "Pull current patient data from a shared, continuously updated layer.", pc: 4, se: 4, dr: 4, fb: 0, ab: 1 },
-      { id: "c", text: "Ask registration staff to reconcile discrepancies manually by phone.", pc: 0, se: 0, dr: -1, fb: 0, ab: 0 }
+      { id: 'a', text: 'Use one fixed intake form for everyone and ask nurses to follow up by phone when answers need clarification.', pc: -1, se: 3, dr: 8 },
+      { id: 'b', text: 'Shorten the form by removing less common questions and let clinicians ask the rest during the visit.', pc: 8, se: -1, dr: 3 },
+      { id: 'c', text: 'Add branching logic only to one high-volume workflow first and keep all other clinics on static forms.', pc: 3, se: 8, dr: -1 },
+      { id: 'd', text: 'Route patients to different follow-up forms based on earlier answers, with operations managing the routing rules manually.', pc: 3, se: -1, dr: 8 }
     ]
   },
+  // Product-fit: Adaptive Forms
   {
-    id: "q8",
-    weekLabel: "1 week until audit",
-    sceneVariants: {
-      a: {
-        title: "Temporary Confidence",
-        sceneText: "The team agreed to rely on the latest record, but the auditors immediately ask how the hospital prevents the same inconsistency from happening again. The board does not want another workaround; it wants a clear operational priority for the next quarter."
-      },
-      b: {
-        title: "A Foundation Finally Appears",
-        sceneText: "The hospital finally has a more reliable current patient view, and pressure has started to ease. Now the board asks you to name the one priority that will reduce delays and rework most in the next quarter."
-      },
-      c: {
-        title: "The System Runs on Calls",
-        sceneText: "The team is keeping the hospital together through manual coordination, but it looks like crisis management rather than a sustainable operating model. The board wants to hear how you will move the organization out of constant reconciliation mode."
-      }
-    },
-    question: "What should the hospital focus on next?",
+    id: 'q10-forms-fit',
+    isProductFit: true,
+    productBlock: 'forms',
+    title: 'Adaptive forms path',
+    sceneText: 'You reduced some friction, but the hospital still relies on a patchwork of form versions, routing decisions, and manual follow-up. Different services need flexibility, but the system also needs a more consistent way to handle changing questions, repeated fields, and patient-specific paths. The next step is to choose an adaptive forms approach that fits how your hospital wants to operate.',
+    question: 'What kind of adaptive forms path best fits your hospital right now?',
     options: [
-      { id: "a", text: "Optimize one high-volume care pathway end to end, from intake to outcome.", pc: 6, se: 4, dr: 4, fb: 0, ab: 0 },
-      { id: "b", text: "Let each department improve its own process independently.", pc: 4, se: 3, dr: -1, fb: 0, ab: 0 },
-      { id: "c", text: "Focus only on final documentation quality, not on data reuse across the journey.", pc: 3, se: 3, dr: -2, fb: 0, ab: 0 }
+      { id: 'a', text: 'We need a path focused on intake simplicity and business workflow efficiency.', productId: 'Formstack' },
+      { id: 'b', text: 'We need a developer-led path with strong control and extensibility for forms and integrations.', productId: 'form.io' },
+      { id: 'c', text: 'We need a healthcare-specific path for adaptive forms and more structured clinical data capture.', productId: 'Formbox' },
+      { id: 'd', text: 'We need an intake path tightly connected to patient communication, readiness, and pre-visit coordination.', productId: 'Luma Health' }
+    ]
+  },
+  // Final scenario: operationalize FHIR + forms before audit (scoring)
+  {
+    id: 'q11-final-audit',
+    title: 'Before audit review',
+    sceneText: 'You have chosen your FHIR server path and your adaptive forms approach. The audit is days away. Leadership wants to see that the hospital is not only technically ready but operationally ready: how data flows from intake through to the systems that auditors will review, and how staff and patients experience the new setup.',
+    question: 'How do you operationalize the chosen FHIR and forms approach before the audit?',
+    options: [
+      { id: 'a', text: 'Run a short pilot with one high-volume clinic, document lessons, then roll out to the rest before audit.', pc: 3, se: 8, dr: -1 },
+      { id: 'b', text: 'Align data flows between FHIR and forms first, then run targeted staff training and a patient-communication push.', pc: -1, se: 3, dr: 8 },
+      { id: 'c', text: 'Freeze further changes, run end-to-end checks on key journeys, and prepare a single audit-ready evidence pack.', pc: 8, se: 3, dr: -1 },
+      { id: 'd', text: 'Map every touchpoint where forms feed FHIR, fix gaps, and add a lightweight dashboard for audit visibility.', pc: 3, se: -1, dr: 8 }
     ]
   }
 ];
+
+const PRODUCT_REVEAL_SUBTITLES = {
+  HAPI: 'Your team chose a self-managed path with strong control.',
+  Medplum: 'Your team chose a platform-oriented path for new workflows and apps.',
+  Aidbox: 'Your team chose a path optimized for faster rollout and dependable operations.',
+  Firely: 'Your team chose a standards-led enterprise path with stronger governance.',
+  Formstack: 'Your team chose a path focused on intake simplicity and workflow efficiency.',
+  'form.io': 'Your team chose a developer-led forms path with strong control and extensibility.',
+  Formbox: 'Your team chose a healthcare-specific adaptive forms path for structured clinical data.',
+  'Luma Health': 'Your team chose an intake path centered on communication and patient readiness.'
+};

@@ -1,7 +1,12 @@
 /**
- * Game loop: start, answer handling, Formbox/Aidbox checks, outcome.
+ * Game loop: start, answer handling, product reveals after FHIR and Forms product-fit questions.
  */
 (function () {
+  const TOTAL_QUESTIONS = 11;
+  const FHIR_PRODUCT_FIT_INDEX = 4;
+  const FORMS_PRODUCT_FIT_INDEX = 9;
+  const LAST_QUESTION_INDEX = 10;
+
   function init() {
     bindOverlayListeners();
     document.getElementById('btn-start').addEventListener('click', startGame);
@@ -12,10 +17,8 @@
 
   function resetState() {
     state.metrics = { patientComfort: 25, staffEffectiveness: 25, dataReadiness: 25 };
-    state.formboxFit = 0;
-    state.aidboxFit = 0;
-    state.formboxActive = false;
-    state.aidboxActive = false;
+    state.selectedFhirProduct = null;
+    state.selectedFormsProduct = null;
     state.currentQuestion = 0;
     state.answers = [];
     state.lead = { name: '', organization: '', email: '' };
@@ -43,73 +46,72 @@
       btn.disabled = true;
       btn.classList.add('tapped');
 
-      const deltas = { patientComfort: option.pc, staffEffectiveness: option.se, dataReadiness: option.dr };
-      applyOptionDeltas(option);
+      if (option.productId != null) {
+        if (state.currentQuestion === FHIR_PRODUCT_FIT_INDEX) {
+          state.selectedFhirProduct = option.productId;
+          showProductReveal('fhir', option.productId);
+        } else if (state.currentQuestion === FORMS_PRODUCT_FIT_INDEX) {
+          state.selectedFormsProduct = option.productId;
+          showProductReveal('forms', option.productId);
+        }
+      } else {
+        applyOptionDeltas(option);
+        if (state.currentQuestion !== LAST_QUESTION_INDEX) {
+          updateMetricBars();
+        }
+      }
+
       state.answers.push(index);
 
-      showDeltaLabels(deltas);
-      updateMetricBars();
-      const nextQuestion = state.currentQuestion + 1;
-      if (nextQuestion < 8) updateCountdown(8 - nextQuestion);
+      if (state.currentQuestion === FHIR_PRODUCT_FIT_INDEX || state.currentQuestion === FORMS_PRODUCT_FIT_INDEX) {
+        return;
+      }
 
+      if (state.currentQuestion === LAST_QUESTION_INDEX) {
+        // Следующий кадр: отрисовываем новые метрики, чтобы transition от старого к новому значению успел проиграть
+        requestAnimationFrame(function () {
+          updateMetricBars();
+          // Время на анимацию полос (0.5s в CSS) + пауза, затем финальный экран
+          var metricAnimationMs = 600;
+          var pauseAfterAnimationMs = 500;
+          setTimeout(function () {
+            showScreen('outcome-screen');
+            renderOutcome();
+          }, metricAnimationMs + pauseAfterAnimationMs);
+        });
+        return;
+      }
+
+      const nextIndex = state.currentQuestion + 1;
       setTimeout(() => {
-        state.currentQuestion++;
+        state.currentQuestion = nextIndex;
         updateFlowStripCurrent();
-
-        if (state.currentQuestion === 4) {
-          formboxCheck();
-          return;
-        }
-        if (state.currentQuestion === 7) {
-          aidboxCheck();
-          return;
-        }
-        if (state.currentQuestion >= 8) {
-          showScreen('outcome-screen');
-          renderOutcome();
-          return;
-        }
-
-        const prevAnswerIndex = state.currentQuestion > 0 ? state.answers[state.currentQuestion - 1] : undefined;
-        renderQuestion(QUESTIONS[state.currentQuestion], prevAnswerIndex);
+        const prevAnswerIndex = state.answers[nextIndex - 1];
+        renderQuestion(QUESTIONS[nextIndex], prevAnswerIndex);
         bindAnswerButtons();
       }, 600);
     });
   }
 
-  function formboxCheck() {
-    if (state.formboxFit >= 2) {
-      showFormboxActivation();
-      updateMetricBars();
-    } else {
-      showFormboxPain();
-    }
-  }
-
-  function aidboxCheck() {
-    if (state.aidboxFit >= 2) {
-      showAidboxActivation();
-      updateMetricBars();
-    } else {
-      showAidboxPain();
-    }
-  }
-
-  window.onAfterFormboxCheck = function () {
-    hideOverlay(OVERLAY_IDS.formboxActivation);
+  window.onAfterFhirReveal = function () {
+    hideOverlay(OVERLAY_IDS.fhirReveal);
+    applyProductSelectionBonus();
     updateMetricBars();
-    renderFlowStrip();
-    const prevAnswerIndex = state.answers[3];
-    renderQuestion(QUESTIONS[4], prevAnswerIndex);
+    state.currentQuestion = FHIR_PRODUCT_FIT_INDEX + 1;
+    updateFlowStripCurrent();
+    const prevAnswerIndex = state.answers[FHIR_PRODUCT_FIT_INDEX];
+    renderQuestion(QUESTIONS[state.currentQuestion], prevAnswerIndex);
     bindAnswerButtons();
   };
 
-  window.onAfterAidboxCheck = function () {
-    hideOverlay(OVERLAY_IDS.aidboxActivation);
+  window.onAfterFormsReveal = function () {
+    hideOverlay(OVERLAY_IDS.formsReveal);
+    applyProductSelectionBonus();
     updateMetricBars();
-    renderFlowStrip();
-    const prevAnswerIndex = state.answers[6];
-    renderQuestion(QUESTIONS[7], prevAnswerIndex);
+    state.currentQuestion = FORMS_PRODUCT_FIT_INDEX + 1;
+    updateFlowStripCurrent();
+    const prevAnswerIndex = state.answers[FORMS_PRODUCT_FIT_INDEX];
+    renderQuestion(QUESTIONS[state.currentQuestion], prevAnswerIndex);
     bindAnswerButtons();
   };
 

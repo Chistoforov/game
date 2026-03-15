@@ -7,10 +7,8 @@ const state = {
     staffEffectiveness: 25,
     dataReadiness: 25
   },
-  formboxFit: 0,
-  aidboxFit: 0,
-  formboxActive: false,
-  aidboxActive: false,
+  selectedFhirProduct: null,
+  selectedFormsProduct: null,
   currentQuestion: 0,
   answers: [],
   lead: { name: '', organization: '', email: '' }
